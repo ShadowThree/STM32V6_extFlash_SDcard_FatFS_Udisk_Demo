@@ -1,0 +1,4 @@
+*.uvguix.*
+JLinkLog.txt
+MDK-ARM/STM32V6_extFlash_SDcard_FatFS_Udisk_Demo/*
+.vscode/*

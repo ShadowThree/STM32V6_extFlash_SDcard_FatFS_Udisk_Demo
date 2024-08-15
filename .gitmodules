@@ -1,0 +1,9 @@
+[submodule "ThirdUtils/dbger"]
+	path = ThirdUtils/dbger
+	url = https://github.com/ShadowThree/dbger.git
+[submodule "ThirdUtils/sfud"]
+	path = ThirdUtils/sfud
+	url = https://github.com/armink/SFUD.git
+[submodule "ThirdUtils/fatfs_file_handler"]
+	path = ThirdUtils/fatfs_file_handler
+	url = https://github.com/ShadowThree/fatfs_file_handler
