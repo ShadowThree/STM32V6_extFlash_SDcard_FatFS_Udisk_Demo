@@ -28,6 +28,7 @@
 #include "dbger.h"
 #include "fatfs_file_handler.h"
 #include "sfud.h"
+#include "usb_device.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -104,7 +105,10 @@ int main(void)
   #if FH_API_TEST
   FH_API_test(&sDisk[0]);
   FH_API_test(&sDisk[1]);
-  #endif  
+  #endif
+  
+  FH_mount(&sDisk[0]);
+  MX_USB_DEVICE_Init();
 	
   /* USER CODE END 2 */
 

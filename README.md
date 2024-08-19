@@ -3,6 +3,7 @@
 2. 本工程通过`CubeMx`配置并生成初始化代码；
 3. `MCU`可以通过`FatFS`同时访问`SDcard`和`extFlash`;
 4. 本工程的外部`SPI Flash`驱动使用了[SFUD](https://github.com/armink/SFUD.git)，移植说明查看[这里](https://github.com/ShadowThree/STM32V6_SPI_FLASH_database)；
+5. `SDcard`模拟`U盘`；
 
 ## 注意
 1. 由于`ST`公司的`HAL`库有点问题，`SDIO`初始化代码需作如下修改(这里不需要调用`SD`卡初始化函数，后面的`FatFS`会调用)：
@@ -29,6 +30,7 @@ void MX_SDIO_SD_Init(void)
 3. 当前的[fatfs_file_handler.c](./ThirdUtils/fatfs_file_handler/fatfs_file_handler.c)文件中，`FH_mkfs()`和`FH_get_space()`两个函数对`SPI Flash`执行失败；
 4. 和`SDcard`相关的`FATFS`功能，都是通过`CubeMX`生成，主要在[sd_diskio.c](./FATFS/Target/sd_diskio.c)中；
 5. 和`SPI Flash`相关的`FATFS`功能，框架是通过`CubeMX`生成，需要自己实现初始化及读写功能，主要在[user_diskio.c](./FATFS/Target/user_diskio.c)中；
+6. `USB`初始化函数`MX_USB_DEVICE_Init()`调用之前，一定要先初始化`SDIO`接口，不然`USB`初始化将会失败；但是`CubeMX`生成的初始化代码中，并未调用初始化`SDIO`相关函数，所以要么在`MX_SDIO_Init()`中初始化`SDIO`，要么在`CubeMX`中设置不调用`MX_USB_DEVICE_Init()`，由用户初始化`SDIO`后再主动调用。初始化`SDIO`可以通过`FH_mkfs()`或者`FH_mount()`实现，它们都会调用[sd_diskio.c](./FATFS/Target/sd_diskio.c)中的`SD_initialize()`函数；
 
 ## 使用
 ```sh
@@ -38,3 +40,8 @@ git clone https://github.com/ShadowThree/STM32V6_extFlash_SDcard_FatFS_Udisk_Dem
 git submodule update --init
 # 3. build and downlowd
 ```
+
+## 待完成
+1. 将`SPI Flash`也模拟成`U盘`(即`USB`如何实现多个实例)；
+2. 给`SDIO`添加`DMA`读写，而不是阻塞读写；（添加`DMA`导致`FatFS`读写`SDcard`失败？）
+3. 给`SPI`添加`DMA`读写，而不是阻塞读写；（需要看看`SFUD`是否支持`DMA`方式）
