@@ -248,8 +248,8 @@ int8_t STORAGE_Read_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t bl
   /* USER CODE BEGIN 6 */
   UNUSED(lun);
 	
-	HAL_SD_ReadBlocks(&hsd, buf, blk_addr, blk_len, HAL_MAX_DELAY);
-	//HAL_SD_ReadBlocks_DMA(&hsd, buf, blk_addr, blk_len);
+	//HAL_SD_ReadBlocks(&hsd, buf, blk_addr, blk_len, HAL_MAX_DELAY);
+	HAL_SD_ReadBlocks_DMA(&hsd, buf, blk_addr, blk_len);
 	while (HAL_SD_GetCardState(&hsd) != HAL_SD_CARD_TRANSFER){}
 
   return (USBD_OK);
@@ -269,8 +269,8 @@ int8_t STORAGE_Write_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t b
   /* USER CODE BEGIN 7 */
   UNUSED(lun);
 
-	HAL_SD_WriteBlocks(&hsd, buf, blk_addr, blk_len, HAL_MAX_DELAY);
-	//HAL_SD_WriteBlocks_DMA(&hsd, buf, blk_addr, blk_len);
+	//HAL_SD_WriteBlocks(&hsd, buf, blk_addr, blk_len, HAL_MAX_DELAY);
+	HAL_SD_WriteBlocks_DMA(&hsd, buf, blk_addr, blk_len);
 	while (HAL_SD_GetCardState(&hsd) != HAL_SD_CARD_TRANSFER){}
 
   return (USBD_OK);
