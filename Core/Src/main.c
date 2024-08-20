@@ -109,9 +109,20 @@ int main(void)
   FH_API_test(&sDisk[1]);
   #endif
   
+  #if UDISK_SDCARD
   FH_mount(&sDisk[0]);
+  #endif
+  
+  #if UDISK_SPI_FLASH
+  FH_mount(&sDisk[1]);
+  #endif
+  
   MX_USB_DEVICE_Init();
-	
+  HAL_Delay(5000);
+  MX_USB_DEVICE_DeInit();
+  HAL_Delay(1000);
+  MX_USB_DEVICE_Init();
+  
   /* USER CODE END 2 */
 
   /* Infinite loop */

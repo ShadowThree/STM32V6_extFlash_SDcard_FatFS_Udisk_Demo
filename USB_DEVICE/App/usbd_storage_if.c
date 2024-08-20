@@ -22,7 +22,7 @@
 #include "usbd_storage_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#include "dbger.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,7 +31,14 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+#if UDISK_SDCARD
 extern SD_HandleTypeDef hsd;
+#endif
+
+#if UDISK_SPI_FLASH
+#include "sfud.h"
+extern sfud_flash spi_flash_1;
+#endif
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -62,9 +69,10 @@ extern SD_HandleTypeDef hsd;
   * @{
   */
 
+// this macro just used for SPI Flash
 #define STORAGE_LUN_NBR                  1
-#define STORAGE_BLK_NBR                  0x10000
-#define STORAGE_BLK_SIZ                  0x200
+#define STORAGE_BLK_NBR                  (2048)
+#define STORAGE_BLK_SIZ                  (4096)
 
 /* USER CODE BEGIN PRIVATE_DEFINES */
 
@@ -195,12 +203,19 @@ int8_t STORAGE_GetCapacity_FS(uint8_t lun, uint32_t *block_num, uint16_t *block_
   /* USER CODE BEGIN 3 */
   UNUSED(lun);
 
-	HAL_SD_CardInfoTypeDef info;
+	#if UDISK_SDCARD
+		HAL_SD_CardInfoTypeDef info;
+		HAL_SD_GetCardInfo(&hsd, &info);
+		*block_num =  info.LogBlockNbr  - 1;
+		*block_size = info.LogBlockSize;
+	#endif
 	
-    HAL_SD_GetCardInfo(&hsd, &info);
-    *block_num =  info.LogBlockNbr  - 1;
-    *block_size = info.LogBlockSize;
-    return 0;
+	#if UDISK_SPI_FLASH
+		*block_num = STORAGE_BLK_NBR;
+		*block_size = STORAGE_BLK_SIZ;
+	#endif
+	
+    return USBD_OK;
   /* USER CODE END 3 */
 }
 
@@ -213,11 +228,17 @@ int8_t STORAGE_IsReady_FS(uint8_t lun)
 {
   /* USER CODE BEGIN 4 */
   UNUSED(lun);
-
-	if(HAL_SD_GetState(&hsd) == HAL_SD_STATE_READY) {
+	
+	#if UDISK_SDCARD
+		if(HAL_SD_GetState(&hsd) == HAL_SD_STATE_READY) {
+			return USBD_OK;
+		}
+		return USBD_FAIL;
+	#endif
+		
+	#if UDISK_SPI_FLASH
 		return USBD_OK;
-	}
-	return USBD_FAIL;
+	#endif
   /* USER CODE END 4 */
 }
 
@@ -248,9 +269,20 @@ int8_t STORAGE_Read_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t bl
   /* USER CODE BEGIN 6 */
   UNUSED(lun);
 	
-	//HAL_SD_ReadBlocks(&hsd, buf, blk_addr, blk_len, HAL_MAX_DELAY);
-	HAL_SD_ReadBlocks_DMA(&hsd, buf, blk_addr, blk_len);
-	while (HAL_SD_GetCardState(&hsd) != HAL_SD_CARD_TRANSFER){}
+	#if UDISK_SDCARD
+		//HAL_SD_ReadBlocks(&hsd, buf, blk_addr, blk_len, HAL_MAX_DELAY);
+		HAL_SD_ReadBlocks_DMA(&hsd, buf, blk_addr, blk_len);
+		while (HAL_SD_GetCardState(&hsd) != HAL_SD_CARD_TRANSFER){}
+	#endif
+	
+	#if UDISK_SPI_FLASH
+		sfud_err sfud_sta;
+		sfud_sta = sfud_read(&spi_flash_1, blk_addr * STORAGE_BLK_SIZ, blk_len * STORAGE_BLK_SIZ, buf);
+		if(sfud_sta != SFUD_SUCCESS) {
+			LOG_ERR("SPI Flash Udisk read err[%d]\n", sfud_sta);
+			return USBD_FAIL;
+		}
+	#endif
 
   return (USBD_OK);
   /* USER CODE END 6 */
@@ -268,10 +300,21 @@ int8_t STORAGE_Write_FS(uint8_t lun, uint8_t *buf, uint32_t blk_addr, uint16_t b
 {
   /* USER CODE BEGIN 7 */
   UNUSED(lun);
-
-	//HAL_SD_WriteBlocks(&hsd, buf, blk_addr, blk_len, HAL_MAX_DELAY);
-	HAL_SD_WriteBlocks_DMA(&hsd, buf, blk_addr, blk_len);
-	while (HAL_SD_GetCardState(&hsd) != HAL_SD_CARD_TRANSFER){}
+	
+	#if UDISK_SDCARD
+		//HAL_SD_WriteBlocks(&hsd, buf, blk_addr, blk_len, HAL_MAX_DELAY);
+		HAL_SD_WriteBlocks_DMA(&hsd, buf, blk_addr, blk_len);
+		while (HAL_SD_GetCardState(&hsd) != HAL_SD_CARD_TRANSFER){}
+	#endif
+	
+	#if UDISK_SPI_FLASH
+		sfud_err sfud_sta;
+		sfud_sta = sfud_erase_write(&spi_flash_1, blk_addr * STORAGE_BLK_SIZ, blk_len * STORAGE_BLK_SIZ, buf);
+		if(sfud_sta != SFUD_SUCCESS) {
+			LOG_ERR("SPI Flash Udisk write err[%d]\n", sfud_sta);
+			return USBD_FAIL;
+		}
+	#endif
 
   return (USBD_OK);
   /* USER CODE END 7 */

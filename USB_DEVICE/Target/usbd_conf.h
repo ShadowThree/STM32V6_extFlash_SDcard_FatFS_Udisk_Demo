@@ -75,7 +75,14 @@
 /*---------- -----------*/
 #define USBD_SELF_POWERED     1U
 /*---------- -----------*/
-#define MSC_MEDIA_PACKET     512U
+#define UDISK_SDCARD		0     // [0]=[SPI Flash as Udisk]   [1]=[SDcard as Udisk]
+#define UDISK_SPI_FLASH		(!UDISK_SDCARD)
+
+#if UDISK_SDCARD
+  #define MSC_MEDIA_PACKET     512
+#elif UDISK_SPI_FLASH
+  #define MSC_MEDIA_PACKET     4096
+#endif
 
 /****************************************/
 /* #define for FS and HS identification */
